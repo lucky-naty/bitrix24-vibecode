@@ -48,6 +48,39 @@ This skill helps an AI coding agent work with the VibeCode Bitrix24 documentatio
 - preserving cross-cutting platform invariants
 - avoiding common implementation and deployment mistakes
 
+## Why this skill
+
+VibeCode combines several domains that are easy to mix up in real work:
+
+- Bitrix24 entity access
+- VibeCode platform APIs
+- infrastructure and Black Hole deployment
+- multiple auth models
+
+This skill reduces wasted cycles by helping the agent:
+
+- open the right docs section first
+- apply platform invariants only when needed
+- avoid common integration and deploy mistakes
+- keep answers short for simple questions and deeper for implementation tasks
+
+## Typical use cases
+
+- explain which key type to use for a new integration
+- build a script against Entity API without mixing request and response field conventions
+- debug why a deployed app is not reachable through Black Hole
+- decide when to use batch, search, or aggregate instead of client-side loops
+- separate retryable platform errors from auth or schema mistakes
+
+## Example prompts
+
+Use this skill with prompts like:
+
+- `Explain how to choose between vibe_api_, vibe_app_, and vibe_live_.`
+- `Build a VibeCode CRM contacts sync and check the likely footguns first.`
+- `Debug why my app deploy succeeded but the service is still unreachable.`
+- `Which VibeCode docs section should I open first for OAuth app auth?`
+
 ## Source
 
 The skill content was derived from the public VibeCode documentation:
