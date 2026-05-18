@@ -41,45 +41,41 @@ The final layout should look like this:
 
 ## Purpose
 
-This skill helps an AI coding agent work with the VibeCode Bitrix24 documentation, especially for:
-
-- choosing the right auth model
-- routing to the correct docs section
-- preserving cross-cutting platform invariants
-- avoiding common implementation and deployment mistakes
+This skill is not for turning the user into a VibeCode expert. It is for making the agent reliable when the user gives a normal task and expects the agent to figure out the platform details on its own.
 
 ## Why this skill
 
-VibeCode combines several domains that are easy to mix up in real work:
+Without this skill, an agent working on VibeCode tasks can easily waste time or make the wrong assumptions about:
 
 - Bitrix24 entity access
 - VibeCode platform APIs
 - infrastructure and Black Hole deployment
 - multiple auth models
 
-This skill reduces wasted cycles by helping the agent:
+This skill reduces that risk by helping the agent:
 
-- open the right docs section first
-- apply platform invariants only when needed
-- avoid common integration and deploy mistakes
-- keep answers short for simple questions and deeper for implementation tasks
+- find the right docs section without reading the whole documentation set
+- remember the platform invariants that matter across many tasks
+- avoid predictable mistakes in deploy, auth, Entity API, and bulk operations
+- use the docs as internal guidance while still executing ordinary user requests
 
-## Typical use cases
+## What this improves
 
-- deploy a VibeCode app without making the agent rediscover Black Hole and infrastructure rules
-- build Bitrix24 integrations where the agent must choose the correct auth model on its own
-- implement Entity API workflows without confusing request conventions, response formats, and user fields
-- debug failed deploys, unreachable apps, and API errors with the right VibeCode-specific assumptions
-- handle bulk sync and reporting tasks without wasting time on naive client-side loops
+- App deploys become more reliable because the agent remembers the Black Hole model, port `3000`, readiness checks, and deploy response behavior.
+- Integration tasks become safer because the agent is less likely to choose the wrong auth path or confuse VibeCode APIs with native Bitrix24 APIs.
+- Entity API work becomes cleaner because the agent keeps request field rules, response format differences, and user field exceptions straight.
+- Bulk sync and reporting logic become more efficient because the agent reaches for batch, search, and aggregate earlier instead of naive loops.
+- Debugging becomes faster because the agent separates retryable platform failures from auth, scope, and schema mistakes.
 
-## Example prompts
+## Typical user requests
 
-Use this skill with prompts like:
+The user does not need to ask special documentation questions. Typical requests are ordinary work requests such as:
 
-- `Deploy this VibeCode app.`
-- `Build an integration that syncs CRM contacts from Bitrix24.`
-- `Fix why this deployed app is still unreachable.`
-- `Implement bulk update logic for leads through VibeCode API.`
+- `Deploy this application to VibeCode.`
+- `Build a Bitrix24 integration for this app.`
+- `Fix why the deployed application is not reachable.`
+- `Implement lead synchronization and make it stable for large volumes.`
+- `Set up the backend so the app can read and update CRM entities.`
 
 ## Source
 
