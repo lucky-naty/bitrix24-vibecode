@@ -66,20 +66,20 @@ This skill reduces wasted cycles by helping the agent:
 
 ## Typical use cases
 
-- explain which key type to use for a new integration
-- build a script against Entity API without mixing request and response field conventions
-- debug why a deployed app is not reachable through Black Hole
-- decide when to use batch, search, or aggregate instead of client-side loops
-- separate retryable platform errors from auth or schema mistakes
+- deploy a VibeCode app without making the agent rediscover Black Hole and infrastructure rules
+- build Bitrix24 integrations where the agent must choose the correct auth model on its own
+- implement Entity API workflows without confusing request conventions, response formats, and user fields
+- debug failed deploys, unreachable apps, and API errors with the right VibeCode-specific assumptions
+- handle bulk sync and reporting tasks without wasting time on naive client-side loops
 
 ## Example prompts
 
 Use this skill with prompts like:
 
-- `Explain how to choose between vibe_api_, vibe_app_, and vibe_live_.`
-- `Build a VibeCode CRM contacts sync and check the likely footguns first.`
-- `Debug why my app deploy succeeded but the service is still unreachable.`
-- `Which VibeCode docs section should I open first for OAuth app auth?`
+- `Deploy this VibeCode app.`
+- `Build an integration that syncs CRM contacts from Bitrix24.`
+- `Fix why this deployed app is still unreachable.`
+- `Implement bulk update logic for leads through VibeCode API.`
 
 ## Source
 
