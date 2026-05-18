@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bitrix24 VibeCode"
+  short_description: "VibeCode docs for API and deploys"
+  default_prompt: "Use $bitrix24-vibecode to answer or implement a task against the VibeCode Bitrix24 platform docs."
