@@ -61,10 +61,3 @@ The skill content was derived from the public VibeCode documentation:
 - <https://vibecode.bitrix24.tech/docs/mcp>
 
 Review and update the references if the public docs change.
-
-## Publish checklist
-
-- Verify `SKILL.md` and `references/` match the latest public docs
-- Review license and copyright line
-- Create a GitHub repository named `bitrix24-vibecode`
-- Push this folder as the repository root
