@@ -11,6 +11,7 @@
 
 - `vibe_api_` is the default choice for personal scripts, dashboards, and automations tied to one Bitrix24 user.
 - `vibe_app_` is for team apps with Bitrix24 OAuth. These requests often need both `X-Api-Key` and `Authorization: Bearer <session token>`.
+- For Bitrix24 iframe/placement flow, `vibe_session_*` is passed in POST body as `access_token`, not in the query string.
 - `vibe_live_` is a management key for administration tasks, not the default for ordinary entity work.
 - The key prefix tells you which auth model and runtime behavior to expect before reading the rest of the task.
 
@@ -21,6 +22,7 @@
 - In responses, field format depends on the underlying Bitrix24 API: many CRM entities come back in camelCase, while legacy entities like tasks and users may come back in `UPPER_CASE`.
 - User fields are an exception: keep their native Bitrix24 names such as `UF_CRM_*` or `ufCrm_*`; do not normalize them.
 - For large reads, VibeCode can auto-paginate and aggregate multiple Bitrix24 calls into one VibeCode response.
+- Prefer auto-pagination via `limit`; do not hand-roll page walking unless the endpoint clearly requires it.
 - Search and aggregate can do more work server-side than plain list endpoints; prefer them for filtered reports and dashboards.
 
 ## Infrastructure Invariants
