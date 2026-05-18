@@ -18,4 +18,4 @@ Use this file as a short preflight checklist before implementation or debugging.
 12. Prefer batch, search, and aggregate over naive client loops.
 13. Retry `RATE_LIMIT` and `BITRIX_UNAVAILABLE` with backoff.
 14. Check scopes, endpoint semantics, and portal state before blaming `BITRIX_ERROR` on your code.
-15. Read higher-level docs before jumping to API Reference.
+15. Do not assume every endpoint returns `success/data`; AI Router uses raw OpenAI-compatible responses.

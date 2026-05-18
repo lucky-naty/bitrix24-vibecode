@@ -1,13 +1,13 @@
 ---
 name: bitrix24-vibecode
-description: Use when an AI coding agent is building, debugging, or explaining VibeCode Bitrix24 integrations and needs the right docs path, auth model, platform invariants, or deployment rules.
+description: Use when an AI coding agent is handling VibeCode Bitrix24 apps, integrations, bots, or AI Router workflows and needs the right docs path, auth model, platform invariants, or deployment rules.
 ---
 
 # VibeCode Docs
 
 ## Overview
 
-Use this skill to route quickly through the official VibeCode docs, preserve cross-cutting invariants, and avoid re-deriving platform basics in each task.
+Use this skill to route through VibeCode docs quickly, keep platform invariants straight, and avoid re-deriving basics.
 
 ## Workflow
 
@@ -26,7 +26,7 @@ Use this skill to route quickly through the official VibeCode docs, preserve cro
 
 ## Task Patterns
 
-### App Or Integration Build
+### App, Bot, Or Integration Build
 
 Use quick start plus the target domain section. Default flow:
 

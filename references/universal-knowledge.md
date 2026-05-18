@@ -2,10 +2,10 @@
 
 ## Start Here
 
-- Start any VibeCode task with `GET /v1/me` when a real key is available. It reveals available entities, scopes, and deployment capabilities for that key.
+- Start with `GET /v1/me` when a real key is available. It reveals entities, scopes, and deployment capabilities for that key.
 - Base API URL is `https://vibecode.bitrix24.tech/v1`.
-- Primary auth header is `X-Api-Key: <key>`.
-- VibeCode returns a unified response envelope with `success`, `data`, and often `meta` or `total`.
+- Primary auth header is `X-Api-Key: <key>`; AI Router also accepts `Authorization: Bearer <key>`.
+- Most VibeCode APIs return `success` plus `data`; AI Router returns raw OpenAI-compatible responses.
 
 ## Keys And Access
 
