@@ -43,6 +43,18 @@ The final layout should look like this:
 
 This skill is not for turning the user into a VibeCode expert. It is for making the agent reliable when the user gives a normal task and expects the agent to figure out the platform details on its own.
 
+## What is implemented
+
+The skill already includes:
+
+- a main workflow in `SKILL.md` for routing, minimal context loading, and task execution
+- a docs routing reference so the agent opens the right VibeCode section first
+- a universal knowledge reference with platform invariants that apply across many tasks
+- a short anti-footguns checklist for implementation and debugging
+- optional OpenAI/Codex metadata in `agents/openai.yaml`
+
+The repository is public and can be used as a cross-compatible skill source for Claude-style and Codex/OpenAI-style setups.
+
 ## Why this skill
 
 Without this skill, an agent working on VibeCode tasks can easily waste time or make the wrong assumptions about:
@@ -66,6 +78,18 @@ This skill reduces that risk by helping the agent:
 - Entity API work becomes cleaner because the agent keeps request field rules, response format differences, and user field exceptions straight.
 - Bulk sync and reporting logic become more efficient because the agent reaches for batch, search, and aggregate earlier instead of naive loops.
 - Debugging becomes faster because the agent separates retryable platform failures from auth, scope, and schema mistakes.
+
+## What the skill knows
+
+The skill helps the agent keep the following platform rules in mind:
+
+- choose the right auth model between `vibe_api_`, `vibe_app_`, and `vibe_live_`
+- treat VibeCode platform APIs and native Bitrix24 APIs as different layers
+- use Entity API conventions correctly, including camelCase requests and user field exceptions
+- remember that Black Hole deploys are built around the internal app port `3000`
+- wait for both `running` and `CONNECTED` before treating a deployed app as reachable
+- use `stream=false` when deploy automation expects JSON instead of SSE
+- prefer batch, search, and aggregate when bulk work would otherwise become a slow client loop
 
 ## Typical user requests
 
