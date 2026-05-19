@@ -1,6 +1,6 @@
 ---
 name: bitrix24-vibecode
-description: Use when an AI coding agent is handling VibeCode Bitrix24 apps, integrations, bots, or AI Router workflows and needs the right docs path, auth model, platform invariants, or deployment rules.
+description: Use when working with VibeCode Bitrix24 apps, integrations, bots, or AI Router workflows.
 ---
 
 # VibeCode Docs
