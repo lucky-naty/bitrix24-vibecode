@@ -39,6 +39,10 @@ Use quick start plus the target domain section. Default flow:
 
 Open keys/auth first. Decide from the key prefix whether the task is personal (`vibe_api_`), OAuth app (`vibe_app_`), or management (`vibe_live_`). For OAuth app requests, remember that a bearer session token may also be required for user-context calls.
 
+### Placement / Iframe App (per-operator identity)
+
+For any Bitrix24 placement app (LEFT_MENU, CRM_*_DETAIL_TAB, etc.) on a BlackHole server where each operator must act as themselves, read [references/placement-flow.md](references/placement-flow.md) first. It covers the handler/`__init`/gateway runtime, the setup invariants (`handlerUrl` = bitrix-handler, `appUrl` linked to the server, `accessPolicy=PORTAL`), and the symptom→fix tree for the gate / `auth2.bitrix24.net` / `ERR_BLOCKED_BY_RESPONSE` / `APP_RESOLVE_FAILED` failures.
+
 ### Entity Work
 
 Open Entity API first, then API Reference only if exact endpoint confirmation is needed. Prefer search, aggregate, and batch capabilities over naive client-side loops when the task is report-heavy or bulk-oriented.
@@ -67,3 +71,4 @@ Open error docs early for real failures. Separate permanent mistakes from retrya
 - [references/section-routing.md](references/section-routing.md): map task types to doc sections and URLs.
 - [references/universal-knowledge.md](references/universal-knowledge.md): cross-section platform postulates that should be applied broadly.
 - [references/anti-footguns.md](references/anti-footguns.md): short preflight checklist for implementation and debugging.
+- [references/placement-flow.md](references/placement-flow.md): Bitrix24 iframe/placement apps on BlackHole — handler/`__init`/gateway runtime, per-operator identity, setup invariants (`handlerUrl`, `appUrl`, `accessPolicy`), and a symptom→fix troubleshooting tree.

@@ -7,7 +7,9 @@ Use this file as a short preflight checklist before implementation or debugging.
 1. Run `GET /v1/me` first when a real key is available.
 2. Match the key type before designing the flow: `vibe_api_`, `vibe_app_`, `vibe_live_`.
 3. For `vibe_app_` flows, check whether both `X-Api-Key` and bearer token are required.
-4. For iframe or placement flow, pass `vibe_session_*` as POST body field `access_token`, not in the query string.
+4. For iframe or placement flow, read the session from the Gateway-injected `X-Vibe-Authorization: Bearer vibe_session_*` header. Do NOT read `access_token` from the POST body — that contract is retired. See [placement-flow.md](placement-flow.md).
+4b. Placement setup invariants: `app.handlerUrl` = `https://vibecode.bitrix24.tech/v1/bitrix-handler` AND `app.appUrl` points to the deployed BlackHole server URL. `appUrl: null` causes `APP_RESOLVE_FAILED`. A direct iframe hit without `__init` shows the visitor gate (auth2.bitrix24.net), which fails in-iframe with `ERR_BLOCKED_BY_RESPONSE` — not a network/proxy issue.
+4c. For a placement app meant for all operators of one portal, set the server `accessPolicy` to `PORTAL`, not `AUTHENTICATED` (the latter needs a VibeCode account). Enum: `OWNER_ONLY | NAMED_USERS | DEPARTMENT | PORTAL | AUTHENTICATED | PUBLIC`.
 5. Do not mix VibeCode platform APIs with native Bitrix24 APIs.
 6. Default request fields to camelCase.
 7. Keep `UF_CRM_*` and `ufCrm_*` in native form.

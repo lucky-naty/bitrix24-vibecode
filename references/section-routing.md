@@ -8,6 +8,7 @@ Use this file to choose the first VibeCode docs section.
 - Open `entity-api` for CRUD, search, aggregate, fields, pagination, and entity conventions.
 - Open `keys-auth` for key choice, scopes, OAuth, or unauthorized errors.
 - Open `infra` for servers, deploys, Black Hole, access policies, and lifecycle.
+- Open [placement-flow.md](placement-flow.md) for any Bitrix24 iframe/placement app: handler/`__init`/gateway flow, `appUrl` linking, `accessPolicy`, and the gate/`APP_RESOLVE_FAILED`/`ERR_BLOCKED_BY_RESPONSE` troubleshooting tree.
 - Open `ai` for chat completions, models, BYOK, usage, or OpenAI-compatible clients.
 - Open `bots` for bot registration, polling, commands, and messages.
 - Open `mcp` for agent integration, MCP transport, or IDE setup.

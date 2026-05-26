@@ -11,7 +11,7 @@
 
 - `vibe_api_` is the default choice for personal scripts, dashboards, and automations tied to one Bitrix24 user.
 - `vibe_app_` is for team apps with Bitrix24 OAuth. These requests often need both `X-Api-Key` and `Authorization: Bearer <session token>`.
-- For Bitrix24 iframe/placement flow, `vibe_session_*` is passed in POST body as `access_token`, not in the query string.
+- For Bitrix24 iframe/placement flow, the Gateway injects the session as the `X-Vibe-Authorization: Bearer vibe_session_*` header — the app reads it from there. The pre-2026-05 contract that delivered the session as `access_token` in the POST body is RETIRED; do not read it from the body. See [placement-flow.md](placement-flow.md).
 - `vibe_live_` is a management key for administration tasks, not the default for ordinary entity work.
 - The key prefix tells you which auth model and runtime behavior to expect before reading the rest of the task.
 
