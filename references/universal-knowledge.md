@@ -34,6 +34,15 @@
 - For deploy automation that expects JSON, use `POST /v1/infra/servers/:id/deploy?stream=false`; otherwise the endpoint may stream progress as SSE.
 - Infrastructure API is VibeCode's own platform API, not a Bitrix24 wrapper. Do not assume Bitrix24 method naming or limitations there.
 
+## Deploying To A Black Hole VM
+
+- Two deploy paths: the runtime deploy `POST /v1/infra/servers/:id/deploy`, and direct shell via `POST /v1/infra/servers/:id/exec` (run arbitrary commands on the VM). Many real deploys end up using `exec` (push files, write `.env`, start a service).
+- **Use the API key that CREATED the server.** Both `exec` and server-scoped calls reject other keys with `WRONG_KEY: "Server exists but belongs to a different API key."` The creating key may be a `vibe_api_` or a `vibe_app_` key — check which one lists the server via `GET /v1/infra/servers`.
+- Runtime deploy `source.content` must be a **`.tar.gz`** archive (base64), NOT `.zip`. A zip needs `unzip`, whose install can fail on a fresh VM (`"Failed to install unzip ... Use a .tar.gz archive"`). Large `source.content` POSTs intermittently fail with `TypeError: terminated` (upload cut) — just retry.
+- A freshly provisioned VM may have `apt`/`dpkg` locked during cloud-init; the deploy `runtime` step then fails with `"Another command is running"`. Wait a minute and retry; do not hammer it.
+- Black Hole VMs ship with Node preinstalled (e.g. `v18`) and often **no Docker**. Run the app as a `systemd` service (`WorkingDirectory=/opt/app`, `ExecStart=/usr/bin/node src/index.js`, `Restart=always`) listening on `:3000`; Black Hole tunnels that port to the subdomain. (`dotenv` loads `/opt/app/.env` from the working dir.)
+- `exec` command gotchas: the body is JSON, so keep the command **ASCII-only** — non-ASCII (e.g. Cyrillic) breaks Content-Length (`"Request body size did not match Content-Length"`). The remote shell is **dash**, not bash: no `()` groups, no process substitution, no `[[ ]]`; quote glob-y args (e.g. `grep -E '^[A-Z_]+='`). `exec` is rate-limited to ~10 calls/min, so push large files in few big chunks, not many small ones.
+
 ## Performance And Scale
 
 - Prefer Batch API or per-entity batch operations for mass updates instead of long client loops.

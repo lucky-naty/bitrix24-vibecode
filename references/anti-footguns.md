@@ -22,3 +22,6 @@ Use this file as a short preflight checklist before implementation or debugging.
 14. Retry `RATE_LIMIT` and `BITRIX_UNAVAILABLE` with backoff.
 15. Check scopes, endpoint semantics, and portal state before blaming `BITRIX_ERROR` on your code.
 16. Do not assume every endpoint returns `success/data`; AI Router uses raw OpenAI-compatible responses.
+17. `accessPolicy` is per-SERVER, not per-app. A Black Hole VM can co-host several apps, so `PUBLIC` exposes ALL of them to the internet. Confirm with the user before loosening it, and revert to `PORTAL` immediately after any temporary change.
+18. A placement (e.g. `LEFT_MENU`) renders in the portal only AFTER the app is installed/published. If `placement.bind` returns `alreadyBound` but the menu item is missing, the app is not installed — not a binding bug.
+19. "Приложение не найдено" / `APP_RESOLVE_FAILED` when opening a placement = the app↔server link is broken. Re-`PATCH /v1/apps/:id { appUrl }` to the server subdomain root (`https://app-<id>.vibecode.bitrix24.tech`) to force the relink. This breaks when the server and app were created under different keys.
