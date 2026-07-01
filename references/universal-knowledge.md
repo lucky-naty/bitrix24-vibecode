@@ -9,11 +9,12 @@
 
 ## Keys And Access
 
-- `vibe_api_` is the default choice for personal scripts, dashboards, and automations tied to one Bitrix24 user.
-- `vibe_app_` is for team apps with Bitrix24 OAuth. These requests often need both `X-Api-Key` and `Authorization: Bearer <session token>`.
+- `vibe_api_` — **portal data via Vibe API.** Tied to one portal, every request acts as the key owner, no session token needed. Default choice for personal scripts, dashboards, server integrations, and cron/unattended jobs (works precisely because it needs no interactive session).
+- `vibe_app_` — **embed an app in the portal + Bitrix24 OAuth.** Tied to an OAuth app; each request runs as the *authorizing user*, so it needs BOTH `X-Api-Key` and `Authorization: Bearer <session token>`. Required for per-operator identity (placement apps, bizproc robots).
 - For Bitrix24 iframe/placement flow, the Gateway injects the session as the `X-Vibe-Authorization: Bearer vibe_session_*` header — the app reads it from there. The pre-2026-05 contract that delivered the session as `access_token` in the POST body is RETIRED; do not read it from the body. See [placement-flow.md](placement-flow.md).
-- `vibe_live_` is a management key for administration tasks, not the default for ordinary entity work.
+- `vibe_live_` — **platform administration only.** NOT tied to one portal and has **no access to Bitrix24 entity data** — never reach for it to do ordinary CRM/task/entity work.
 - The key prefix tells you which auth model and runtime behavior to expect before reading the rest of the task.
+- Any key can be **read-only** (a write attempt → `403 WRITE_BLOCKED_READONLY_KEY`); a portal policy can also force read-only (`403 KEY_POLICY_READONLY_REQUIRED`). Check the key's scope/policy before designing a write path. `vibe:infra` scope is required for infrastructure calls (`403 INFRA_SCOPE_REQUIRED` otherwise).
 
 ## Entity API Invariants
 
@@ -65,6 +66,8 @@ Galaxy deploy contract:
 ## Deploy / exec runtime error codes
 
 Beyond the deploy-archive gotchas above, the Deploy API surfaces: `409 SERVER_NOT_READY` (not running/connected), `409 AGENT_NOT_CONNECTED` (tunnel agent down), `409 WAKE_IN_PROGRESS` (server being woken by another request — wait, don't hammer), `409 EXEC_BUSY` (a `build`/`deploy`/`upload` already running — one at a time per server), `403 UPLOAD_PATH_DENIED` (forbidden upload path). Deploy API is rate-limited to **~10 operations/minute per server** (separate from the ~10-calls/min `exec` limit noted above).
+- **`GATEWAY_CONNECTION_TERMINATED`** (arrives even with HTTP 200): a long-running `exec` (e.g. `apt install`) tears the tunnel connection, but the command **keeps running on the VM**. Treat like `EXEC_BUSY` — wait longer and retry/poll for the result; do NOT assume the command failed or re-run it blindly.
+- **`409 SNAPSHOT_REQUIRED`**: deploying with `source: { url }` from an external CDN requires the source-snapshot step; bypass only with header `X-Skip-Source-Snapshot: <non-empty reason ≤200 chars>`. `source.content` deploys don't hit this.
 
 ## Portal Event Subscriptions (push, no polling)
 
@@ -72,6 +75,7 @@ Beyond the deploy-archive gotchas above, the Deploy API surfaces: `409 SERVER_NO
 - **Event name MUST be ALL-UPPERCASE**: `ONTASKADD`, `ONCRMDEALUPDATE`, `ONIMCONNECTORMESSAGEADD`. Mixed case (`OnImConnectorMessageAdd`) → `INVALID_EVENT`.
 - Use the **OAuth-app key that owns the server** (`vibe_app_`); a plain `vibe_api_` server without an OAuth app → `400 NOT_OAUTH_APP`. The platform performs the Bitrix `event.bind` itself (under the server's managed app), so `event.bind` needs a **commercial** portal tier (free → `502 BIND_FAILED`).
 - Delivery is a normal Bitrix event POST (`application/x-www-form-urlencoded`) to `appPath`; verify `auth[application_token]` and reply 2xx (platform retries + wakes a sleeping server). `recentDeliveries: []` with `status: ACTIVE` means the bind exists but Bitrix has fired nothing to it yet — see the imconnector caveat in anti-footguns.
+- Re-binding an already-bound handler returns `ERROR_HANDLER_ALREADY` / `handler_already` — treat it as success (idempotent), not a failure.
 
 ## Performance And Scale
 

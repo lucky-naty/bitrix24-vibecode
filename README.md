@@ -113,6 +113,12 @@ The user does not need to ask special documentation questions. Typical requests 
 
 ## Changelog
 
+### v1.3.1
+
+- Sharpened the key-type guidance (`vibe_api_` portal data / no session / good for cron, `vibe_app_` per-operator OAuth identity, `vibe_live_` platform admin with **no** Bitrix24 entity data) and added read-only-key policy codes (`WRITE_BLOCKED_READONLY_KEY`, `KEY_POLICY_READONLY_REQUIRED`, `INFRA_SCOPE_REQUIRED`).
+- Added more deploy/exec runtime codes from experience: `GATEWAY_CONNECTION_TERMINATED` (long `exec` drops the tunnel but keeps running on the VM — wait/retry) and `409 SNAPSHOT_REQUIRED` (external-URL source needs the snapshot step or `X-Skip-Source-Snapshot`).
+- Noted that re-binding an already-bound event handler returns `ERROR_HANDLER_ALREADY` and should be treated as success (idempotent).
+
 ### v1.3.0
 
 - Added `references/bizproc-robot-flow.md`: full bizproc automation-robot flow (registration with `vibe_app_` + `vibe_session`, FREE-tariff support, `documentType` for tasks, one-time OAuth bootstrap, native form-encoded runtime callback, `bizproc.event.send` completion, native REST v3 work).
