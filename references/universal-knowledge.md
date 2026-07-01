@@ -4,7 +4,7 @@
 
 - Start with `GET /v1/me` when a real key is available. It reveals entities, scopes, and deployment capabilities for that key.
 - Base API URL is `https://vibecode.bitrix24.tech/v1`.
-- Primary auth header is `X-Api-Key: <key>`; AI Router also accepts `Authorization: Bearer <key>`.
+- Primary auth header is `X-Api-Key: <key>`. `Authorization: Bearer <key>` is an accepted alternative for `vibe_api_` and `vibe_live_` keys (OpenAI-compatible clients / AI Router). For `vibe_app_`, both are required: `X-Api-Key` + `Authorization: Bearer <session token>`.
 - Most VibeCode APIs return `success` plus `data`; AI Router returns raw OpenAI-compatible responses.
 
 ## Keys And Access
@@ -22,8 +22,9 @@
 - In responses, field format depends on the underlying Bitrix24 API: many CRM entities come back in camelCase, while legacy entities like tasks and users may come back in `UPPER_CASE`.
 - User fields are an exception: keep their native Bitrix24 names such as `UF_CRM_*` or `ufCrm_*`; do not normalize them.
 - For large reads, VibeCode can auto-paginate and aggregate multiple Bitrix24 calls into one VibeCode response.
-- Prefer auto-pagination via `limit`; do not hand-roll page walking unless the endpoint clearly requires it.
-- Search and aggregate can do more work server-side than plain list endpoints; prefer them for filtered reports and dashboards.
+- Prefer auto-pagination via `limit`; do not hand-roll page walking unless the endpoint clearly requires it. `limit` defaults to `50`, max `5000`; when `limit > 50` VibeCode fetches multiple Bitrix24 pages and merges them into one response.
+- Search and aggregate can do more work server-side than plain list endpoints; prefer them for filtered reports and dashboards. `POST /{entity}/search` uses windowed search (time-sliced); disable with `autoWindow: false` only for a concrete reason.
+- Bulk CRUD on one entity: `POST /{entity}/batch` (`{ action, items }`, ≤50 items → `BATCH_LIMIT_EXCEEDED`). Cross-entity: separate `POST /v1/batch`.
 
 ## Infrastructure Invariants
 
@@ -42,16 +43,49 @@
 - A freshly provisioned VM may have `apt`/`dpkg` locked during cloud-init; the deploy `runtime` step then fails with `"Another command is running"`. Wait a minute and retry; do not hammer it.
 - Black Hole VMs ship with Node preinstalled (e.g. `v18`) and often **no Docker**. Run the app as a `systemd` service (`WorkingDirectory=/opt/app`, `ExecStart=/usr/bin/node src/index.js`, `Restart=always`) listening on `:3000`; Black Hole tunnels that port to the subdomain. (`dotenv` loads `/opt/app/.env` from the working dir.)
 - `exec` command gotchas: the body is JSON, so keep the command **ASCII-only** — non-ASCII (e.g. Cyrillic) breaks Content-Length (`"Request body size did not match Content-Length"`). The remote shell is **dash**, not bash: no `()` groups, no process substitution, no `[[ ]]`; quote glob-y args (e.g. `grep -E '^[A-Z_]+='`). `exec` is rate-limited to ~10 calls/min, so push large files in few big chunks, not many small ones.
+- **`exec` command string is capped at 10000 chars** (`VALIDATION_ERROR: too_big, maximum 10000`). To push a file bigger than that: base64 it, split into ≤~7000-char chunks, `printf '%s' '<chunk>' >> /tmp/f.b64` (first chunk `>` to truncate, rest `>>`), then `base64 -d /tmp/f.b64 | tar xz -C <dir>`. One small final `exec` does the decode + `systemctl restart`.
+- **App source snapshots (2026+):** every *successful* deploy auto-saves the app's sources (content-hashed, so an unchanged deploy adds nothing); history keeps recent + daily + weekly slices, "published" versions kept indefinitely. Visible/downloadable in the cabinet's "Исходники приложений" registry — a built-in rollback/handoff safety net, no manual backup step. Don't build your own source-archiving on top of deploy.
+
+## Server Kinds: Standalone (Black Hole VM) vs Galaxy App
+
+Two hosting models. Check `kind` on the server; the deploy contract and lifecycle differ.
+
+- **Standalone (`kind=STANDALONE`)** — a real cloud VM in Black Hole mode. Deploy requires `status=running` + `blackholeStatus=CONNECTED` (else `NOT_BLACKHOLE` in OPEN mode, or `SERVER_NOT_READY` while provisioning). Create: `POST /v1/infra/servers` needs `provider, name, plan, region`; two-step create → poll for CONNECTED → deploy. Full VM lifecycle applies (start/stop/wake/reboot/sleep/refresh + access-policy + port PATCH). Counted in `/v1/me` `infra.limits.used`. Returns one-time `ssh.password` / `ssh.privateKey` at create — save immediately.
+- **Galaxy App (`kind=GALAXY_APP`)** — a container on a shared host; **deploy builds the container itself** ("деплой сам собирает контейнер"), so `CONNECTED` is NOT required. Container is capped at **512 MB RAM**. NOT counted in `infra.limits.used` (bounded by host capacity). **No v1 lifecycle actions** (start/stop/wake/access-policy/port) — a portal admin manages it via the galaxy admin surface; only owner `DELETE /v1/infra/servers/:id` applies.
+
+Galaxy deploy contract:
+- **Deploy immediately after create**, or pass `source` at create (Galaxy only; on a non-Galaxy portal `source` at create → `400 SOURCE_AT_CREATE_GALAXY_ONLY`).
+- `source.content` ONLY (`source.url` / `source.versionId` → `400 GALAXY_DEPLOY_CONTENT_ONLY`).
+- `runtime` (e.g. `"node20"`) AND `start` are REQUIRED (missing → `400 GALAXY_DEPLOY_RUNTIME_REQUIRED`). `install` must be single-line (newline → `400 GALAXY_DEPLOY_INVALID_INSTALL`).
+- Dockerfile is AUTO-GENERATED from `runtime`/`install`/`start`/`port` (`start` baked as CMD); a user Dockerfile in the archive is ignored. App listens on `port` (default 3000); tunnel proxies to it.
+- Galaxy runtime error codes: `409 GALAXY_BUILD_BUSY`, `409 GALAXY_SLEEPING`, `502 GALAXY_HOST_UNREACHABLE`, `502 GALAXY_APP_BUILD_FAILED` (returns buildLog tail), `502 GALAXY_APP_START_FAILED` (app crashed after start, e.g. OOM at 512 MB — returns buildLog tail).
+- **OOM graduate path:** on `GALAXY_APP_START_FAILED` with an OOM hint, re-create dedicated: `POST /v1/infra/servers { placement: "dedicated", graduateFrom: <appId>, plan, provider, region }` then deploy.
+- **Trial/plan gating:** Galaxy forces plan `bc-medium`, which a trial blocks → `PLAN_NOT_ALLOWED_ON_TRIAL`. On a Galaxy-First portal, pass `placement: "dedicated"` to get a standalone `bc-micro` VM instead (e.g. `provider=bitrix-cloud`, `region=ru-central`). Other billing gates: `BILLING_EXHAUSTED`, `TRIAL_EXPIRED`, `COMMERCIAL_PLAN_REQUIRED`.
+
+## Deploy / exec runtime error codes
+
+Beyond the deploy-archive gotchas above, the Deploy API surfaces: `409 SERVER_NOT_READY` (not running/connected), `409 AGENT_NOT_CONNECTED` (tunnel agent down), `409 WAKE_IN_PROGRESS` (server being woken by another request — wait, don't hammer), `409 EXEC_BUSY` (a `build`/`deploy`/`upload` already running — one at a time per server), `403 UPLOAD_PATH_DENIED` (forbidden upload path). Deploy API is rate-limited to **~10 operations/minute per server** (separate from the ~10-calls/min `exec` limit noted above).
+
+## Portal Event Subscriptions (push, no polling)
+
+- Subscribe a BlackHole server to a Bitrix24 portal event and the platform tunnels each event to your app — no public URL needed: `POST /v1/infra/servers/:id/event-subscriptions { "event": "...", "appPath": "/your/handler" }`. List/journal via `GET` (`recentDeliveries`), remove via `DELETE …/:subId`.
+- **Event name MUST be ALL-UPPERCASE**: `ONTASKADD`, `ONCRMDEALUPDATE`, `ONIMCONNECTORMESSAGEADD`. Mixed case (`OnImConnectorMessageAdd`) → `INVALID_EVENT`.
+- Use the **OAuth-app key that owns the server** (`vibe_app_`); a plain `vibe_api_` server without an OAuth app → `400 NOT_OAUTH_APP`. The platform performs the Bitrix `event.bind` itself (under the server's managed app), so `event.bind` needs a **commercial** portal tier (free → `502 BIND_FAILED`).
+- Delivery is a normal Bitrix event POST (`application/x-www-form-urlencoded`) to `appPath`; verify `auth[application_token]` and reply 2xx (platform retries + wakes a sleeping server). `recentDeliveries: []` with `status: ACTIVE` means the bind exists but Bitrix has fired nothing to it yet — see the imconnector caveat in anti-footguns.
 
 ## Performance And Scale
 
 - Prefer Batch API or per-entity batch operations for mass updates instead of long client loops.
 - Large filtered reads may use windowed search automatically; disable only when you have a concrete reason.
-- Default rate limit shown in auth docs is `10` requests per second, so bulk jobs should batch and retry instead of firing naive parallel bursts.
+- Two independent rate limits apply per key:
+  - **Platform (VibeCode):** `300` requests/minute per source, sliding 60s window. Exposed via `X-RateLimit-Limit` / `X-RateLimit-Remaining` / `X-RateLimit-Reset`. Exceeded → `429 RATE_LIMITED` (carries `retryAfter`).
+  - **Portal (Bitrix24):** ~`10` req/sec, shared across all portal keys (actual in `rateLimit.requestsPerSecond`). Exceeded → `502 BITRIX_UNAVAILABLE`.
+- Bulk jobs should batch and retry instead of firing naive parallel bursts.
 
 ## Error Handling
 
-- Distinguish auth failures (`AUTH_REQUIRED`, `INVALID_KEY`, `KEY_REVOKED`, `SCOPE_DENIED`) from transient platform failures (`RATE_LIMIT`, `BITRIX_UNAVAILABLE`, some `BITRIX_ERROR` cases).
-- `502 BITRIX_UNAVAILABLE` usually means retry with backoff, not immediate schema changes.
+- Distinguish auth failures (`401 MISSING_API_KEY`, `401 INVALID_API_KEY`, `401 INVALID_APP_KEY`, `401 TOKEN_EXPIRED`, `403 OAUTH_REQUIRED`, `403 SCOPE_DENIED`) from transient platform failures (`429 RATE_LIMITED`, `502 BITRIX_UNAVAILABLE`, `504 QUEUE_TIMEOUT`, some `422 BITRIX_ERROR` cases). Error names are exact enum strings — the pre-2026 shorthands `AUTH_REQUIRED`/`INVALID_KEY`/`KEY_REVOKED`/`RATE_LIMIT` are NOT real codes; a deleted key returns `INVALID_API_KEY`.
+- Retryable (docs ship auto-retry for these): `RATE_LIMITED` (honor `retryAfter`, ~1–2s), `QUEUE_TIMEOUT`, `BITRIX_UNAVAILABLE` (~5s), `ERROR_LOOP_DETECTED`, `INTERNAL_ERROR`.
+- `502 BITRIX_UNAVAILABLE` usually means retry with backoff, not immediate schema changes. For a WRITE, do a `GET` check before blind retry — a slow portal may still apply the write after timeout, so a blind retry creates a duplicate.
 - Preserve request context for debugging, especially response code, payload, and request time. If available, keep `X-Request-Id`.
 - When an entity call fails, check scopes, endpoint path, and field names before assuming the platform is broken.

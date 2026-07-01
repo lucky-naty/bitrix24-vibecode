@@ -43,6 +43,10 @@ Open keys/auth first. Decide from the key prefix whether the task is personal (`
 
 For any Bitrix24 placement app (LEFT_MENU, CRM_*_DETAIL_TAB, etc.) on a BlackHole server where each operator must act as themselves, read [references/placement-flow.md](references/placement-flow.md) first. It covers the handler/`__init`/gateway runtime, the setup invariants (`handlerUrl` = bitrix-handler, `appUrl` linked to the server, `accessPolicy=PORTAL`), and the symptom→fix tree for the gate / `auth2.bitrix24.net` / `ERR_BLOCKED_BY_RESPONSE` / `APP_RESOLVE_FAILED` failures.
 
+### Bizproc Robot (task/CRM automation)
+
+For any Bitrix24 bizproc automation robot registered through VibeCode, read [references/bizproc-robot-flow.md](references/bizproc-robot-flow.md) first. It covers registration (`POST /v1/bizproc-robots`, `vibe_app_`+`vibe_session`, works on FREE tariff, `documentType` for tasks), the one-time browser OAuth bootstrap for the `vibe_session`, the native form-encoded runtime callback (`event_token`, `auth[application_token]`), completion via `bizproc.event.send` (HTTP 200 ≠ completion), and doing the work via native REST v3.
+
 ### Entity Work
 
 Open Entity API first, then API Reference only if exact endpoint confirmation is needed. Prefer search, aggregate, and batch capabilities over naive client-side loops when the task is report-heavy or bulk-oriented.
@@ -72,3 +76,4 @@ Open error docs early for real failures. Separate permanent mistakes from retrya
 - [references/universal-knowledge.md](references/universal-knowledge.md): cross-section platform postulates that should be applied broadly.
 - [references/anti-footguns.md](references/anti-footguns.md): short preflight checklist for implementation and debugging.
 - [references/placement-flow.md](references/placement-flow.md): Bitrix24 iframe/placement apps on BlackHole — handler/`__init`/gateway runtime, per-operator identity, setup invariants (`handlerUrl`, `appUrl`, `accessPolicy`), and a symptom→fix troubleshooting tree.
+- [references/bizproc-robot-flow.md](references/bizproc-robot-flow.md): Bitrix24 bizproc automation robots via VibeCode — registration (`vibe_app_`+`vibe_session`, FREE tariff, `documentType`), one-time OAuth bootstrap, runtime callback contract, `bizproc.event.send` completion, native REST v3 work.

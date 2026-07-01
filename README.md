@@ -13,6 +13,11 @@ This repository is intentionally minimal. The repository root is the skill root,
 
 - `SKILL.md`: the skill itself
 - `references/`: supporting reference files
+  - `section-routing.md`: map a task to the right VibeCode docs section
+  - `universal-knowledge.md`: cross-section platform invariants (auth, Entity API, infra, **Standalone vs Galaxy deploy**, rate limits, error handling)
+  - `anti-footguns.md`: preflight checklist of predictable mistakes
+  - `placement-flow.md`: Bitrix24 iframe/placement apps on Black Hole — per-operator identity, gateway runtime, setup invariants, symptom→fix tree
+  - `bizproc-robot-flow.md`: Bitrix24 bizproc automation robots via VibeCode — registration, OAuth bootstrap, runtime callback, `bizproc.event.send` completion, native REST v3 work
 - `agents/openai.yaml`: optional OpenAI/Codex UI metadata
 
 ## Compatibility
@@ -51,6 +56,8 @@ The skill already includes:
 - a docs routing reference so the agent opens the right VibeCode section first
 - a universal knowledge reference with platform invariants that apply across many tasks
 - a short anti-footguns checklist for implementation and debugging
+- a placement/iframe flow reference for per-operator Bitrix24 apps on Black Hole
+- a bizproc-robot flow reference for task/CRM automation robots
 - optional OpenAI/Codex metadata in `agents/openai.yaml`
 
 The repository is public and can be used as a cross-compatible skill source for Claude-style and Codex/OpenAI-style setups.
@@ -88,8 +95,11 @@ The skill helps the agent keep the following platform rules in mind:
 - use Entity API conventions correctly, including camelCase requests and user field exceptions
 - remember that Black Hole deploys are built around the internal app port `3000`
 - wait for both `running` and `CONNECTED` before treating a deployed app as reachable
+- pick the right deploy target: Standalone Black Hole VM vs Galaxy App container (512 MB cap, OOM graduate path, trial plan gating)
 - use `stream=false` when deploy automation expects JSON instead of SSE
 - prefer batch, search, and aggregate when bulk work would otherwise become a slow client loop
+- use exact error-code enums (`RATE_LIMITED`, `BITRIX_UNAVAILABLE`, `OAUTH_REQUIRED`, ...) and the two-tier rate model (platform 300/min + portal ~10/sec)
+- route per-operator placement apps and bizproc automation robots correctly instead of guessing the auth and callback contracts
 
 ## Typical user requests
 
@@ -100,6 +110,22 @@ The user does not need to ask special documentation questions. Typical requests 
 - `Fix why the deployed application is not reachable.`
 - `Implement lead synchronization and make it stable for large volumes.`
 - `Set up the backend so the app can read and update CRM entities.`
+
+## Changelog
+
+### v1.3.0
+
+- Added `references/bizproc-robot-flow.md`: full bizproc automation-robot flow (registration with `vibe_app_` + `vibe_session`, FREE-tariff support, `documentType` for tasks, one-time OAuth bootstrap, native form-encoded runtime callback, `bizproc.event.send` completion, native REST v3 work).
+- Added a **Standalone vs Galaxy App** deploy model to `universal-knowledge.md`: server `kind`, Galaxy container build/512 MB cap/OOM graduate path, deploy/exec runtime error codes, trial `bc-medium` gating.
+- Corrected error handling against live docs: real enum names (`RATE_LIMITED`, `INVALID_API_KEY`, `OAUTH_REQUIRED`, `TOKEN_EXPIRED`, ...) instead of earlier shorthands, expanded retryable set, and the `BITRIX_UNAVAILABLE` write-duplicate caveat.
+- Corrected the rate-limit model to two tiers: platform `300/min` per source (`429 RATE_LIMITED`, `X-RateLimit-*`) and portal `~10/sec` shared (`502 BITRIX_UNAVAILABLE`).
+- Clarified OAuth: VibeCode session token is 24 h with no refresh (re-run authorize); native Bitrix app OAuth `refresh_token` is the separate self-renewing one.
+- Added `imconnector.send.messages` runtime error codes and Entity API limits (`limit` default 50 / max 5000, `autoWindow`, single-entity `batch`).
+- Verified all of the above against the current public VibeCode docs.
+
+### v1.2.0
+
+- Black Hole exec-deploy guide; `accessPolicy` and placement footguns; `placement-flow.md` reference.
 
 ## Source
 
@@ -112,5 +138,7 @@ The skill content was derived from the public VibeCode documentation:
 - <https://vibecode.bitrix24.tech/docs/cli>
 - <https://vibecode.bitrix24.tech/docs/errors>
 - <https://vibecode.bitrix24.tech/docs/mcp>
+- <https://vibecode.bitrix24.tech/docs/ai>
+- <https://vibecode.bitrix24.tech/docs/bots>
 
 Review and update the references if the public docs change.
