@@ -113,6 +113,13 @@ The user does not need to ask special documentation questions. Typical requests 
 
 ## Changelog
 
+### v1.3.2
+
+- Deeper mining of real build sessions plus a full re-verification against the live docs.
+- Added the **root cause of the `imconnector` wall**: the VibeCode `/v1/apps` scope whitelist rejects `imconnector` and `event` (`VALIDATION_ERROR: Invalid enum value`; only `im, imbot, imopenlines, …` pass) and placement `CONTACT_CENTER`, so a managed app structurally cannot register connectors — hence the native local app. Also `WRONG_AUTH_TYPE` on webhook register, and the `tokens.domain = oauth.bitrix.info` trap (use the real portal domain).
+- Added diagnostics: `401 BH_LOGIN_REQUIRED` on a direct subdomain hit means the server is alive (normal gate, not a fault); a sleeping Black Hole server drops the direct `ONAPPINSTALL` callback (wake, then reinstall).
+- Corrected Galaxy against docs: it does not self-connect (`blackholeStatus` stays `NONE`), `CONNECTED` is not a deploy precondition; the ~512 MB cap and `WAKE_IN_PROGRESS` / `GATEWAY_CONNECTION_TERMINATED` are marked as observed (not in the docs error table). Doc-confirmed deploy codes, `SNAPSHOT_REQUIRED` + `X-Skip-Source-Snapshot`, and the 10 ops/min limit retained.
+
 ### v1.3.1
 
 - Sharpened the key-type guidance (`vibe_api_` portal data / no session / good for cron, `vibe_app_` per-operator OAuth identity, `vibe_live_` platform admin with **no** Bitrix24 entity data) and added read-only-key policy codes (`WRITE_BLOCKED_READONLY_KEY`, `KEY_POLICY_READONLY_REQUIRED`, `INFRA_SCOPE_REQUIRED`).
