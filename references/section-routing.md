@@ -4,6 +4,7 @@ Use this file to choose the first VibeCode docs section.
 
 ## Routing Rules
 
+- For any **deploy / redeploy / "my change won't ship"** task, open [deploy-playbook.md](deploy-playbook.md) first — the linear recipe + error map.
 - Start with `quick-start` for a first app, deploy flow, or platform overview.
 - Open `entity-api` for CRUD, search, aggregate, fields, pagination, and entity conventions.
 - Open `keys-auth` for key choice, scopes, OAuth, or unauthorized errors.

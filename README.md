@@ -13,6 +13,7 @@ This repository is intentionally minimal. The repository root is the skill root,
 
 - `SKILL.md`: the skill itself
 - `references/`: supporting reference files
+  - `deploy-playbook.md`: linear deploy → edit → redeploy recipe with a symptom→cause→fix error map (start here for any deploy task)
   - `section-routing.md`: map a task to the right VibeCode docs section
   - `universal-knowledge.md`: cross-section platform invariants (auth, Entity API, infra, **Standalone vs Galaxy deploy**, rate limits, error handling)
   - `anti-footguns.md`: preflight checklist of predictable mistakes
@@ -112,6 +113,11 @@ The user does not need to ask special documentation questions. Typical requests 
 - `Set up the backend so the app can read and update CRM entities.`
 
 ## Changelog
+
+### v1.4.0
+
+- Added `references/deploy-playbook.md` — a linear **deploy → edit → redeploy** recipe for people who aren't server experts: know-your-3-facts preflight (owner key, server `kind`, id), `.tar.gz` packaging, `?stream=false` + wait for `running`+`CONNECTED`, the iterate loop (what NOT to recreate), an `exec` cheat-sheet, Galaxy differences, and a symptom→cause→fix error table. Wired into `SKILL.md` and `section-routing.md` as the first stop for any deploy task.
+- Fixed a stale `RATE_LIMIT` reference in `SKILL.md` to the real `RATE_LIMITED` (+ other retryable codes).
 
 ### v1.3.2
 

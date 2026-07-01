@@ -53,14 +53,14 @@ Open Entity API first, then API Reference only if exact endpoint confirmation is
 
 ### Infrastructure And Deployment
 
-Open infrastructure docs first, then load `universal-knowledge` for platform invariants such as Black Hole, port `3000`, readiness rules, and deploy response mode.
+For any deploy, redeploy, or "why won't my change ship" task, follow [references/deploy-playbook.md](references/deploy-playbook.md) — a linear deploy → edit → redeploy recipe with an error map. Load `universal-knowledge` for the deeper platform invariants behind it (Black Hole, port `3000`, readiness rules, deploy response mode, Standalone vs Galaxy).
 
 ### Debugging
 
 Open error docs early for real failures. Separate permanent mistakes from retryable failures:
 
 - Fix auth, scope, path, and field-shape issues before retrying.
-- Retry `RATE_LIMIT` and `BITRIX_UNAVAILABLE` with backoff.
+- Retry `RATE_LIMITED`, `BITRIX_UNAVAILABLE`, `QUEUE_TIMEOUT`, `INTERNAL_ERROR` with backoff (`RATE_LIMIT` is not a real code).
 - Treat many `BITRIX_ERROR` responses as upstream or portal-specific issues, not proof that VibeCode docs are wrong.
 
 ## Answering Style
@@ -72,6 +72,7 @@ Open error docs early for real failures. Separate permanent mistakes from retrya
 
 ## Resources
 
+- [references/deploy-playbook.md](references/deploy-playbook.md): linear deploy → edit → redeploy recipe for shipping and iterating an app, with a symptom→cause→fix error map. Start here for any deploy task.
 - [references/section-routing.md](references/section-routing.md): map task types to doc sections and URLs.
 - [references/universal-knowledge.md](references/universal-knowledge.md): cross-section platform postulates that should be applied broadly.
 - [references/anti-footguns.md](references/anti-footguns.md): short preflight checklist for implementation and debugging.
