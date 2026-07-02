@@ -23,6 +23,8 @@ How a Bitrix24 placement app (LEFT_MENU, CRM_*_DETAIL_TAB, etc.) running on a Bl
 
 The browser never sees `vibe_session_*`. Never put it in JS/sessionStorage/localStorage, never read `_vibe_gw` in JS, never return the token in JSON.
 
+**Session across in-app navigation:** the injected `X-Vibe-Authorization` arrives on gateway-routed requests, but auth can appear "lost" on the app's own subsequent page loads/redirects. Proven pattern: on first authenticated hit, set your OWN signed session cookie (HMAC over the user/portal identity, base64url) with `Max-Age=3600; HttpOnly; Secure; SameSite=None` — `SameSite=None` is mandatory because the app lives in an iframe (`Lax`/`Strict` cookies are silently dropped there). On later requests: prefer the `X-Vibe-Authorization` header, fall back to the signed cookie. Sign the cookie, don't store the raw token in it.
+
 **RETIRED — do not use:** the pre-2026-05 contract that delivered the session as `access_token` in a POST-body HTML auto-submit form. `X-Vibe-Authorization` injected by the Gateway is the ONLY source now.
 
 **Reading placement context:** use `URLSearchParams` on `window.location.search` (`placement`, `placement_options` → `JSON.parse`). Do NOT call `BX24.placement.info()` — it returns nulls across the handler redirect.

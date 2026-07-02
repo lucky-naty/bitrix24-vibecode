@@ -114,6 +114,14 @@ The user does not need to ask special documentation questions. Typical requests 
 
 ## Changelog
 
+### v1.4.2
+
+- Placement iframe session pattern: signed HMAC cookie (`HttpOnly; Secure; SameSite=None` — mandatory in an iframe) as fallback when `X-Vibe-Authorization` isn't present on in-app navigation.
+- Clarified that API `placement.bind` alone is sufficient — the catalog-publication wizard is optional and not required on your own portal.
+- API key settings surface: expiry date, per-second rate limit, IP whitelist, section access — check these before rotating a suddenly failing key.
+- Activities `ownerTypeId` constants (`4` = company, `2` = deal); env-var conventions (`VIBECODE_API_KEY` local, `VIBE_APP_KEY` on the server).
+- Noted that direct portal REST may be unreachable from an agent sandbox (DNS timeout) while the VibeCode wrapper works — egress restriction, not a code bug.
+
 ### v1.4.1
 
 - Documented the demo-tariff scope: all platform operations work on the demo/trial tier; the only restriction is server plan choice (`micro` only, bigger plans → `PLAN_NOT_ALLOWED_ON_TRIAL`).

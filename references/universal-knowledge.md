@@ -15,6 +15,7 @@
 - `vibe_live_` — **platform administration only.** NOT tied to one portal and has **no access to Bitrix24 entity data** — never reach for it to do ordinary CRM/task/entity work.
 - The key prefix tells you which auth model and runtime behavior to expect before reading the rest of the task.
 - Any key can be **read-only** (a write attempt → `403 WRITE_BLOCKED_READONLY_KEY`); a portal policy can also force read-only (`403 KEY_POLICY_READONLY_REQUIRED`). Check the key's scope/policy before designing a write path. `vibe:infra` scope is required for infrastructure calls (`403 INFRA_SCOPE_REQUIRED` otherwise).
+- A key carries more settings than mode/scopes: **expiry date, per-second rate limit, IP whitelist**, and section access — all configurable in the dashboard, rights editable after creation. When a previously working key suddenly 401/403s, check expiry and IP whitelist before rotating it.
 
 ## Entity API Invariants
 
@@ -25,6 +26,7 @@
 - For large reads, VibeCode can auto-paginate and aggregate multiple Bitrix24 calls into one VibeCode response.
 - Prefer auto-pagination via `limit`; do not hand-roll page walking unless the endpoint clearly requires it. `limit` defaults to `50`, max `5000`; when `limit > 50` VibeCode fetches multiple Bitrix24 pages and merges them into one response.
 - Search and aggregate can do more work server-side than plain list endpoints; prefer them for filtered reports and dashboards. `POST /{entity}/search` uses windowed search (time-sliced); disable with `autoWindow: false` only for a concrete reason.
+- Activities filter by owner via `ownerTypeId`: `4` = CRM company, `2` = CRM deal (native Bitrix constants — keep them as magic numbers with a named constant in code).
 - Bulk CRUD on one entity: `POST /{entity}/batch` (`{ action, items }`, ≤50 items → `BATCH_LIMIT_EXCEEDED`). Cross-entity: separate `POST /v1/batch`.
 
 ## Infrastructure Invariants
@@ -43,6 +45,7 @@
 - Runtime deploy `source.content` must be a **`.tar.gz`** archive (base64), NOT `.zip`. A zip needs `unzip`, whose install can fail on a fresh VM (`"Failed to install unzip ... Use a .tar.gz archive"`). Large `source.content` POSTs intermittently fail with `TypeError: terminated` (upload cut) — just retry.
 - A freshly provisioned VM may have `apt`/`dpkg` locked during cloud-init; the deploy `runtime` step then fails with `"Another command is running"`. Wait a minute and retry; do not hammer it.
 - Black Hole VMs ship with Node preinstalled (e.g. `v18`) and often **no Docker**. Run the app as a `systemd` service (`WorkingDirectory=/opt/app`, `ExecStart=/usr/bin/node src/index.js`, `Restart=always`) listening on `:3000`; Black Hole tunnels that port to the subdomain. (`dotenv` loads `/opt/app/.env` from the working dir.)
+- Env-var conventions: keep the personal key as `VIBECODE_API_KEY=vibe_api_...` locally, and put the app key on the server as `VIBE_APP_KEY=vibe_app_...` so deployed requests run under the app's identity, not your personal key.
 - `exec` command gotchas: the body is JSON, so keep the command **ASCII-only** — non-ASCII (e.g. Cyrillic) breaks Content-Length (`"Request body size did not match Content-Length"`). The remote shell is **dash**, not bash: no `()` groups, no process substitution, no `[[ ]]`; quote glob-y args (e.g. `grep -E '^[A-Z_]+='`). `exec` is rate-limited to ~10 calls/min, so push large files in few big chunks, not many small ones.
 - **`exec` command string is capped at 10000 chars** (`VALIDATION_ERROR: too_big, maximum 10000`). To push a file bigger than that: base64 it, split into ≤~7000-char chunks, `printf '%s' '<chunk>' >> /tmp/f.b64` (first chunk `>` to truncate, rest `>>`), then `base64 -d /tmp/f.b64 | tar xz -C <dir>`. One small final `exec` does the decode + `systemctl restart`.
 - **App source snapshots (2026+):** every *successful* deploy auto-saves the app's sources (content-hashed, so an unchanged deploy adds nothing); history keeps recent + daily + weekly slices, "published" versions kept indefinitely. Visible/downloadable in the cabinet's "Исходники приложений" registry — a built-in rollback/handoff safety net, no manual backup step. Don't build your own source-archiving on top of deploy.
@@ -94,3 +97,4 @@ Beyond the deploy-archive gotchas above, the Deploy API surfaces (doc-confirmed)
 - `502 BITRIX_UNAVAILABLE` usually means retry with backoff, not immediate schema changes. For a WRITE, do a `GET` check before blind retry — a slow portal may still apply the write after timeout, so a blind retry creates a duplicate.
 - Preserve request context for debugging, especially response code, payload, and request time. If available, keep `X-Request-Id`.
 - When an entity call fails, check scopes, endpoint path, and field names before assuming the platform is broken.
+- Direct REST calls to `https://<portal>/rest/` may be unreachable from an agent/sandbox environment (DNS timeout) while the VibeCode wrapper works fine — that's an egress restriction, not a code bug. Route portal work through the VibeCode API when the environment can't reach the portal directly.
