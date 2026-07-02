@@ -3,6 +3,8 @@
 ## Start Here
 
 - Start with `GET /v1/me` when a real key is available. It reveals entities, scopes, and deployment capabilities for that key.
+- Machine-readable ground truth: `GET /v1/openapi.json` (full endpoint spec, ~411 paths) and `GET /v1/guide` (structured API guide). Prefer these over memory for exact request shapes.
+- **There is NO raw Bitrix REST passthrough** (`/v1/rest` → 404; verified 2026-07). A native method with no entity wrapper is unreachable through ANY vibe key — plan a native webhook/OAuth path for it immediately instead of hunting the docs. Coverage audit (2026-07, demo portal): ~940 of 1171 native methods have no VibeCode wrapper; biggest uncovered areas: imopenlines sessions/operators, lists.*, entity.*, biconnector.*, userfield definition management, task time-tracking (elapseditem), voximplant admin, landing.*.
 - Base API URL is `https://vibecode.bitrix24.tech/v1`.
 - Primary auth header is `X-Api-Key: <key>`. `Authorization: Bearer <key>` is an accepted alternative for `vibe_api_` and `vibe_live_` keys (OpenAI-compatible clients / AI Router). For `vibe_app_`, both are required: `X-Api-Key` + `Authorization: Bearer <session token>`.
 - Most VibeCode APIs return `success` plus `data`; AI Router returns raw OpenAI-compatible responses.
@@ -11,6 +13,7 @@
 
 - `vibe_api_` — **portal data via Vibe API.** Tied to one portal, every request acts as the key owner, no session token needed. Default choice for personal scripts, dashboards, server integrations, and cron/unattended jobs (works precisely because it needs no interactive session).
 - `vibe_app_` — **embed an app in the portal + Bitrix24 OAuth.** Tied to an OAuth app; each request runs as the *authorizing user*, so it needs BOTH `X-Api-Key` and `Authorization: Bearer <session token>`. Required for per-operator identity (placement apps, bizproc robots).
+- Empirical key-capability matrix (2026-07, 201 GET endpoints per key): bare `vibe_app_` (no session) reaches only platform resources (`/v1/me`, `/v1/bots`, `/v1/infra/*`, `/v1/feedback`, oauth flow) — every portal-data endpoint returns `401 TOKEN_MISSING`. `vibe_app_`+session reaches everything `vibe_api_` does PLUS the bizproc surface (`/v1/bizproc-templates|activities|robots`, `/v1/triggers`), which answers `403 OAUTH_REQUIRED` to personal keys. Session TTL is 24h with no refresh token — daemons must re-auth daily (zero-config poll flow: see bizproc-robot-flow.md).
 - For Bitrix24 iframe/placement flow, the Gateway injects the session as the `X-Vibe-Authorization: Bearer vibe_session_*` header — the app reads it from there. The pre-2026-05 contract that delivered the session as `access_token` in the POST body is RETIRED; do not read it from the body. See [placement-flow.md](placement-flow.md).
 - `vibe_live_` — **platform administration only.** NOT tied to one portal and has **no access to Bitrix24 entity data** — never reach for it to do ordinary CRM/task/entity work.
 - The key prefix tells you which auth model and runtime behavior to expect before reading the rest of the task.

@@ -114,6 +114,14 @@ The user does not need to ask special documentation questions. Typical requests 
 
 ## Changelog
 
+### v1.4.3
+
+- Empirical platform audit (2026-07-02, 201 GET endpoints probed per key + behavioral diffs on live entities):
+  - **No raw Bitrix REST passthrough** (`/v1/rest` → 404). Coverage: ~940 of 1171 native methods have no VibeCode wrapper; the uncovered areas (imopenlines sessions, `lists.*`, `entity.*`, `biconnector.*`, userfield definitions, task time-tracking, voximplant, `landing.*`) are listed in section-routing — route them to native REST immediately.
+  - **Key-capability matrix**: bare `vibe_app_` reaches only platform resources (portal data → `401 TOKEN_MISSING`); `vibe_app_`+session = everything `vibe_api_` can PLUS the bizproc surface. App key in `Authorization: Bearer` → misleading `INVALID_SESSION`.
+  - New anti-footguns #23–29: contact multifields live in `fm[]` (top-level `PHONE`/`EMAIL` are null), date filters use Mongo-style operators (`[$gte]`, not `[from]`), `meta.hasMore` lies on the exact-final page, unknown body fields silently dropped (chat `text` vs `message`), `?select=` ignored on GET-by-id, `POST /v1/timelines` ignores `authorId` (Bitrix core), catalog keeps native `propertyN` naming.
+  - Machine-readable ground truth: `GET /v1/openapi.json` (~411 paths) and `GET /v1/guide`.
+
 ### v1.4.2
 
 - Bizproc OAuth bootstrap: new **zero-config platform-callback + polling** path (`GET /v1/oauth/authorize` without redirect_uri → poll `GET /v1/oauth/poll` until `complete`; single-use token retrieval). Localhost-listener flow kept for when you must control the redirect. Footgun: an app key in `Authorization: Bearer` → `INVALID_SESSION` (app keys go in `X-Api-Key`).

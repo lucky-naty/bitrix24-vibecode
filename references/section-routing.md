@@ -18,6 +18,7 @@ Use this file to choose the first VibeCode docs section.
 - Open `api-reference` for exact endpoint confirmation after higher-level docs.
 - For **portal event push** (subscribe a server to Bitrix events, no polling) read `universal-knowledge` → "Portal Event Subscriptions" (UPPERCASE event names, OAuth-app key, commercial tier).
 - For **Open Lines connectors** (`imconnector.*`) read `anti-footguns` #20–21 first: needs a native local-app OAuth token, and connector outgoing events are a known platform gap.
+- **Not in VibeCode at all — route to native REST (webhook/OAuth) immediately, don't hunt the docs**: imopenlines sessions/operators/statistics, `lists.*`, `entity.*` (portal key-value), `biconnector.*`, userfield **definition** management (values ARE covered via entity endpoints), task time-tracking (`task.elapseditem.*`), voximplant admin, `landing.*`, imbot v1 surface (v2 is wrapped). There is no raw REST passthrough (see `universal-knowledge` → Start Here).
 
 ## URL Map
 
