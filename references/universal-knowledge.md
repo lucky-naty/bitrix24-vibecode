@@ -62,6 +62,7 @@ Galaxy deploy contract:
 - Galaxy runtime error codes: `409 GALAXY_BUILD_BUSY`, `409 GALAXY_SLEEPING`, `502 GALAXY_HOST_UNREACHABLE`, `502 GALAXY_APP_BUILD_FAILED` (returns buildLog tail), `502 GALAXY_APP_START_FAILED` (app crashed after start, e.g. OOM at 512 MB — returns buildLog tail).
 - **OOM graduate path:** on `GALAXY_APP_START_FAILED` with an OOM hint, re-create dedicated: `POST /v1/infra/servers { placement: "dedicated", graduateFrom: <appId>, plan, provider, region }` then deploy.
 - **Trial/plan gating:** Galaxy forces plan `bc-medium`, which a trial blocks → `PLAN_NOT_ALLOWED_ON_TRIAL`. On a Galaxy-First portal, pass `placement: "dedicated"` to get a standalone `bc-micro` VM instead (e.g. `provider=bitrix-cloud`, `region=ru-central`). Other billing gates: `BILLING_EXHAUSTED`, `TRIAL_EXPIRED`, `COMMERCIAL_PLAN_REQUIRED`.
+- **Demo tariff (verified live):** ALL platform operations work on the demo/trial tier — the only restriction is server **plan choice: `micro` only** (bigger plans → `PLAN_NOT_ALLOWED_ON_TRIAL`). Do not assume a failure is tariff-gated; check the error code first.
 
 ## Deploy / exec runtime error codes
 

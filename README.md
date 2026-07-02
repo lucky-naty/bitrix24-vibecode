@@ -114,6 +114,10 @@ The user does not need to ask special documentation questions. Typical requests 
 
 ## Changelog
 
+### v1.4.1
+
+- Documented the demo-tariff scope: all platform operations work on the demo/trial tier; the only restriction is server plan choice (`micro` only, bigger plans → `PLAN_NOT_ALLOWED_ON_TRIAL`).
+
 ### v1.4.0
 
 - Added `references/deploy-playbook.md` — a linear **deploy → edit → redeploy** recipe for people who aren't server experts: know-your-3-facts preflight (owner key, server `kind`, id), `.tar.gz` packaging, `?stream=false` + wait for `running`+`CONNECTED`, the iterate loop (what NOT to recreate), an `exec` cheat-sheet, Galaxy differences, and a symptom→cause→fix error table. Wired into `SKILL.md` and `section-routing.md` as the first stop for any deploy task.
