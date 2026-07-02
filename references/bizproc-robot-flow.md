@@ -18,6 +18,15 @@ A robot is an **automation-rule step**: it fires inside a document's automation/
 
 The bizproc methods need a `vibe_session_*` bearer minted from the app's OAuth. One browser click bootstraps it. Note: per keys-auth the VibeCode OAuth token lives **24h and does NOT ship a refresh token** — to renew, re-run the `authorize` → `token` exchange (the `state`↔cookie binding means the GET must happen in a real browser). This is distinct from the NATIVE Bitrix app OAuth `refresh_token` below, which self-renews headless.
 
+**Simplest path — platform-callback + polling (zero-config, verified live 2026-07):** no redirect_uri registration, no localhost listener.
+
+1. `state = crypto.randomUUID()` (min 16 chars).
+2. User opens in a real browser: `GET /v1/oauth/authorize?app_key=<vibe_app_key>&state=<state>` (NO redirect_uri) → one click → platform success page.
+3. You poll `GET /v1/oauth/poll?app_key=<key>&state=<state>` → `{status:"pending"}` until `{status:"complete", access_token:"vibe_session_*", expires_in:86399}`. Token retrieval is single-use.
+4. Use it as `Authorization: Bearer <vibe_session_*>` ALONGSIDE `X-Api-Key: <vibe_app_key>`. Footgun: putting the `vibe_app_` key itself into `Authorization: Bearer` yields `INVALID_SESSION`; app keys go in `X-Api-Key`.
+
+The localhost-listener flow below (customRedirect) still works but is only needed when you must control the redirect target. Third acquisition path: deployed placement apps get `X-Vibe-Authorization: Bearer vibe_session_*` auto-injected by the gateway per request — no manual mint at all.
+
 1. redirect_uri must be **pre-registered EXACTLY** on the app: `PATCH /v1/apps/:id { redirectUris: [...] }`. A `http://localhost:<port>/callback` listener is the simplest, proven bootstrap target (no deploy dependency, no gate). The redirect_uri sent to `authorize` must string-match a registered entry or `authorize` returns `400 INVALID_REDIRECT_URI` — the "any localhost port/path" shortcut is unreliable, register the exact `http://localhost:<port>/callback` you will use.
 2. Open `GET /v1/oauth/authorize?app_key=<key>&redirect_uri=<registered>&state=<16+ chars>` **in a real browser**. The browser must make the GET — `state` binds to a cookie, so a server-side curl breaks the flow.
 3. Capture `code` at the redirect (local listener, or read the tab URL). Exchange: `POST /v1/oauth/token { app_key, code, redirect_uri }` → `access_token: vibe_session_*` (~24h).

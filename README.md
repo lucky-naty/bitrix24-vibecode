@@ -116,6 +116,7 @@ The user does not need to ask special documentation questions. Typical requests 
 
 ### v1.4.2
 
+- Bizproc OAuth bootstrap: new **zero-config platform-callback + polling** path (`GET /v1/oauth/authorize` without redirect_uri → poll `GET /v1/oauth/poll` until `complete`; single-use token retrieval). Localhost-listener flow kept for when you must control the redirect. Footgun: an app key in `Authorization: Bearer` → `INVALID_SESSION` (app keys go in `X-Api-Key`).
 - Placement iframe session pattern: signed HMAC cookie (`HttpOnly; Secure; SameSite=None` — mandatory in an iframe) as fallback when `X-Vibe-Authorization` isn't present on in-app navigation.
 - Clarified that API `placement.bind` alone is sufficient — the catalog-publication wizard is optional and not required on your own portal.
 - API key settings surface: expiry date, per-second rate limit, IP whitelist, section access — check these before rotating a suddenly failing key.
