@@ -114,6 +114,10 @@ The user does not need to ask special documentation questions. Typical requests 
 
 ## Changelog
 
+### v1.4.4
+
+- Coverage-audit refinement (`universal-knowledge`): the "~940 unwrapped methods" figure was a raw method-name count. Corrected to **~930 by method name — an upper bound**: some capabilities are exposed as fields/filters rather than wrapped methods (e.g. deal↔contact bindings via `contactIds` in `/v1/deals`, not `crm.deal.contact.items.*`), so check the OpenAPI spec for the *capability* before assuming a gap. Split the gap list into **zero-trace** (absent from spec AND guide: imopenlines sessions/operators, `entity.*`, `biconnector.*`, voximplant admin) vs **effectively absent** (`lists.*`, `landing.*` beyond sites/pages, userfield definition management, task time-tracking `elapseditem`).
+
 ### v1.4.3
 
 - Empirical platform audit (2026-07-02, 201 GET endpoints probed per key + behavioral diffs on live entities):
